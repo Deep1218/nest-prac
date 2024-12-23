@@ -163,4 +163,28 @@ export class AuthService {
       this.logger.error(`Error while checking email: `, error.stack);
     }
   }
+
+  async generateAccessToken(refreshToken: string) {
+    try {
+      const result = await this.jwtService.verifyAsync(refreshToken);
+      const tokenExists = await this.tokensRepository.findOne({
+        where: { userId: result.sub, type: TokenType.REFRESH },
+      });
+      if (tokenExists) {
+        const userData = await this.findOne({ id: result.sub });
+        const payload = {
+          sub: userData.id,
+          email: userData.email,
+          role: userData.role,
+        };
+        const accessToken = this.jwtService.sign(payload, {
+          expiresIn: this.configService.get<string>('JWT_TOKEN_EXPIRY_TIME'),
+        });
+        return { accessToken };
+      }
+      return new BadRequestException('Invalid refresh token!');
+    } catch (error) {
+      this.logger.error(`Error in generating access token: `, error.stack);
+    }
+  }
 }

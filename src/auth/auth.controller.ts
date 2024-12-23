@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  InternalServerErrorException,
   Logger,
   Post,
   Req,
@@ -10,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { CheckEmailExistsGuard } from './guards/check-email-exists.guard';
 import { CheckUserExistsGuard } from './guards/check-user-exists.guard';
+import { GenerateTokenDTO } from './dto/generate-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,11 +25,17 @@ export class AuthController {
   @Post('login')
   login(@Body() userDetails: CreateUserDto, @Req() req: any) {
     try {
-      if (req.isUserExists) {
-        this.logger.log(`User already exists: `, req.user);
-        return this.authservice.loginProcess(userDetails, req.user);
-      }
-      return this.authservice.loginProcess(userDetails);
-    } catch (error) {}
+      return this.authservice.loginProcess(userDetails, req.user ?? null);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+  @Post('generate-token')
+  generateToken(@Body() tokenDetails: GenerateTokenDTO, @Req() req: any) {
+    try {
+      return this.authservice.generateAccessToken(tokenDetails.refreshToken);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }
