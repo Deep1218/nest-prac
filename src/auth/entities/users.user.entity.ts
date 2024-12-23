@@ -1,10 +1,13 @@
 import { Exclude, Expose } from 'class-transformer';
+import { CompaniesEntity } from '../../modules/users/entities/companies.user.entity';
 import {
   PrimaryGeneratedColumn,
   Column,
   UpdateDateColumn,
   CreateDateColumn,
   Entity,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 
 export enum UserRole {
@@ -69,4 +72,8 @@ export class UsersEntity {
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
+
+  @OneToOne(() => CompaniesEntity)
+  @JoinColumn()
+  company: CompaniesEntity;
 }

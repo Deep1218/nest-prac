@@ -19,9 +19,6 @@ export class CompaniesEntity {
   @Column({ type: 'varchar', length: 250 })
   name: string;
 
-  @Column({ type: 'int8' })
-  userId: number;
-
   @Column({ type: 'text', nullable: true })
   about: string;
 

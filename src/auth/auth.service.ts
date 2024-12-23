@@ -4,7 +4,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import {
   UserRole,
   UsersEntity,
@@ -13,8 +13,8 @@ import {
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { TokensEntity, TokenType } from './entities/tokens.user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import bcrypt from 'bcrypt';
-import { CompaniesEntity } from 'src/modules/users/entities/companies.user.entity';
+import * as bcrypt from 'bcrypt';
+import { CompaniesEntity } from '../modules/users/entities/companies.user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -26,6 +26,7 @@ export class AuthService {
     private usersRepository: Repository<UsersEntity>,
     @InjectRepository(TokensEntity, 'userDB')
     private tokensRepository: Repository<TokensEntity>,
+    @InjectDataSource('userDB')
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -33,40 +34,29 @@ export class AuthService {
 
   private async createUserWithCompany(
     userData: Partial<UsersEntity>,
-    comapnyDetails?: Partial<CompaniesEntity>,
-  ): Promise<any> {
+    companyDetails?: Partial<CompaniesEntity>,
+  ) {
     try {
       return this.dataSource.transaction(async (manager: EntityManager) => {
         // Step 1: Create the user
         const { password = '' } = userData;
         userData.password = await this.encryptPassword(password);
         const user = manager.create(UsersEntity, userData);
-        const savedUser = await manager.save(UsersEntity, user);
 
         // Step 2: If the user role is 'Admin', create a company for the user
         if (userData.role === UserRole.ADMIN) {
-          const company = manager.create(CompaniesEntity, {
-            userId: savedUser.id,
-            ...comapnyDetails,
-          });
+          const company = manager.create(CompaniesEntity, companyDetails);
 
-          await manager.save(CompaniesEntity, company);
+          const newCompany = await manager.save(CompaniesEntity, company);
+          userData.company = newCompany;
         }
+        const savedUser = await manager.save(UsersEntity, user);
+
         // Step 3: Return the created user (with or without the company)
         return savedUser;
       });
     } catch (error) {
       this.logger.error(`In user transcation: `, error.stack);
-    }
-  }
-
-  private async createUser(data): Promise<UsersEntity> {
-    try {
-      data.password = await this.encryptPassword(data.password);
-      const newUser = await this.usersRepository.save(data);
-      return newUser;
-    } catch (error) {
-      this.logger.error('Error insert new user query: ', error.stack);
     }
   }
 
@@ -76,7 +66,7 @@ export class AuthService {
         user ??
         (await this.createUserWithCompany(
           userDetails,
-          userDetails?.comapnyDetails,
+          userDetails?.companyDetails,
         ));
 
       const passwordVerified = await this.verifyPassword(
@@ -108,13 +98,21 @@ export class AuthService {
   }
   async storeToken(userId: number, token: string, type: TokenType) {
     try {
-      let expireAt = new Date();
+      const data = { userId, token, type, expireAt: new Date() };
       if (type === TokenType.REFRESH) {
-        expireAt = new Date(expireAt.getTime() + 60 * 24 * 60 * 60 * 1000); // Add 60 days in milliseconds
+        data.expireAt = new Date(
+          data.expireAt.getTime() + 60 * 24 * 60 * 60 * 1000,
+        ); // Add 60 days in milliseconds
+        const tokenExists = await this.tokensRepository.findOne({
+          where: { userId, type },
+        });
+        if (tokenExists) {
+          data['id'] = tokenExists.id;
+        }
       } else {
-        expireAt = new Date(expireAt.getTime() + 60 * 60 * 1000); // Add 1 hour in milliseconds
+        data.expireAt = new Date(data.expireAt.getTime() + 60 * 60 * 1000); // Add 1 hour in milliseconds
       }
-      return this.tokensRepository.save({ userId, token, type, expireAt });
+      return this.tokensRepository.save(data);
     } catch (error) {
       this.logger.error('Error storing token: ', error.stack);
     }

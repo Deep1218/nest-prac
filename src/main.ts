@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './config/logger/logger.middleware';
-import { Logger, VersioningType } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { WinstonLogger } from './config/logger/winston.logger';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -14,6 +14,14 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = +configService.get('PORT');
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true, // Enables class-transformer to convert payloads
+      stopAtFirstError: true, // Stops validation on the first error
+    }),
+  );
   app.enableVersioning({
     type: VersioningType.URI,
   });

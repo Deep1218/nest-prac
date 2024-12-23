@@ -49,7 +49,7 @@ export class WinstonLogger implements LoggerService {
     this.logger.info(message, { context });
   }
 
-  error(message: any, trace?: string, context?: string) {
+  error(message: any, context?: string, trace?: string) {
     this.logger.error(message, {
       trace,
       context,

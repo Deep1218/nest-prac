@@ -24,11 +24,11 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @ApiProperty({ enum: UserRole, required: true, example: 'Test@123' })
+  @ApiProperty({ enum: UserRole, required: true, example: UserRole.ADMIN })
   @IsEnum(UserRole)
   role: UserRole;
 
   @ApiProperty({ type: CreateCompanyDto })
   @ValidateIf((obj) => obj.role === UserRole.ADMIN)
-  comapnyDetails: CreateCompanyDto;
+  companyDetails: CreateCompanyDto;
 }

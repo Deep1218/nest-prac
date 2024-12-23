@@ -12,9 +12,6 @@ export class CompanyMembersEntity {
   id: number;
 
   @Column({ type: 'int8' })
-  userId: number;
-
-  @Column({ type: 'int8' })
   companyId: number;
 
   @CreateDateColumn({
