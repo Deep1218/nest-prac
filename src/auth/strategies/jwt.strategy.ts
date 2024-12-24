@@ -1,7 +1,9 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuthService } from '../auth.service';
+import { UserStatus } from '../entities/users.user.entity';
 
 const configService = new ConfigService();
 
@@ -9,7 +11,7 @@ const configService = new ConfigService();
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
 
-  constructor() {
+  constructor(private readonly authService: AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -24,6 +26,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     this.logger.log('Token payload: ', JSON.stringify(payload));
-    return payload;
+    const user = await this.authService.findOne({ id: payload.sub });
+    if (!user?.id || user?.isDeleted || user?.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException('User is not active or deleted');
+    }
+    return user;
   }
 }

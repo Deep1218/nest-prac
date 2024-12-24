@@ -48,7 +48,7 @@ export class AuthService {
           const company = manager.create(CompaniesEntity, companyDetails);
 
           const newCompany = await manager.save(CompaniesEntity, company);
-          userData.company = newCompany;
+          user.company = newCompany;
         }
         const savedUser = await manager.save(UsersEntity, user);
 
@@ -62,6 +62,7 @@ export class AuthService {
 
   async loginProcess(userDetails: CreateUserDto, user?: UsersEntity) {
     try {
+      const password = userDetails.password;
       let userData =
         user ??
         (await this.createUserWithCompany(
@@ -70,7 +71,7 @@ export class AuthService {
         ));
 
       const passwordVerified = await this.verifyPassword(
-        userDetails.password,
+        password,
         userData.password,
       );
 
@@ -91,9 +92,9 @@ export class AuthService {
         this.storeToken(userData.id, refreshToken, TokenType.REFRESH);
         return { ...userData, accessToken, refreshToken };
       }
-      return new UnauthorizedException('Invalid credentials');
     } catch (error) {
       this.logger.error('Error while creating user: ', error.stack);
+      return new UnauthorizedException('Invalid credentials');
     }
   }
   async storeToken(userId: number, token: string, type: TokenType) {
@@ -170,21 +171,19 @@ export class AuthService {
       const tokenExists = await this.tokensRepository.findOne({
         where: { userId: result.sub, type: TokenType.REFRESH },
       });
-      if (tokenExists) {
-        const userData = await this.findOne({ id: result.sub });
-        const payload = {
-          sub: userData.id,
-          email: userData.email,
-          role: userData.role,
-        };
-        const accessToken = this.jwtService.sign(payload, {
-          expiresIn: this.configService.get<string>('JWT_TOKEN_EXPIRY_TIME'),
-        });
-        return { accessToken };
-      }
-      return new BadRequestException('Invalid refresh token!');
+      const userData = await this.findOne({ id: tokenExists.userId });
+      const payload = {
+        sub: userData.id,
+        email: userData.email,
+        role: userData.role,
+      };
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: this.configService.get<string>('JWT_TOKEN_EXPIRY_TIME'),
+      });
+      return { accessToken };
     } catch (error) {
       this.logger.error(`Error in generating access token: `, error.stack);
+      throw new BadRequestException('Invalid refresh token!');
     }
   }
 }

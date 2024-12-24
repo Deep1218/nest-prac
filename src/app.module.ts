@@ -12,6 +12,7 @@ import { WinstonLogger } from './config/logger/winston.logger';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersController } from './modules/users/users.controller';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -27,10 +28,10 @@ import { UsersController } from './modules/users/users.controller';
       ...mainDataSource.options,
       autoLoadEntities: true,
     }),
-    UsersModule,
     AuthModule,
+    UsersModule,
   ],
-  controllers: [AppController, UsersController],
+  controllers: [AppController],
   providers: [AppService, WinstonLogger],
 })
 export class AppModule {}

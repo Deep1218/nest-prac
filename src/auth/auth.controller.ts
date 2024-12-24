@@ -24,11 +24,7 @@ export class AuthController {
   @UseGuards(CheckUserExistsGuard)
   @Post('login')
   login(@Body() userDetails: CreateUserDto, @Req() req: any) {
-    try {
-      return this.authservice.loginProcess(userDetails, req.user ?? null);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.authservice.loginProcess(userDetails, req.user ?? null);
   }
   @Post('generate-token')
   generateToken(@Body() tokenDetails: GenerateTokenDTO, @Req() req: any) {
