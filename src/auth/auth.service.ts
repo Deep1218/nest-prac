@@ -44,7 +44,18 @@ export class AuthService {
         const user = manager.create(UsersEntity, userData);
 
         // Step 2: If the user role is 'Admin', create a company for the user
-        if (userData.role === UserRole.ADMIN) {
+        // and if user role is 'viewer' / 'editor' than fetch & add it to user
+        if ([UserRole.VIEWER, UserRole.EDITOR].includes(userData.role)) {
+          const company = await manager.findOne(CompaniesEntity, {
+            where: { id: companyDetails.id },
+          });
+          if (!company) {
+            throw new BadRequestException(
+              "Company with the provided id doesn't exists!",
+            );
+          }
+          user.company = company;
+        } else if (userData.role === UserRole.ADMIN) {
           const company = manager.create(CompaniesEntity, companyDetails);
 
           const newCompany = await manager.save(CompaniesEntity, company);
@@ -52,7 +63,7 @@ export class AuthService {
         }
         const savedUser = await manager.save(UsersEntity, user);
 
-        // Step 3: Return the created user (with or without the company)
+        // Step 3: Return the created user with the company
         return savedUser;
       });
     } catch (error) {
@@ -92,9 +103,10 @@ export class AuthService {
         this.storeToken(userData.id, refreshToken, TokenType.REFRESH);
         return { ...userData, accessToken, refreshToken };
       }
+      throw new UnauthorizedException('Invalid cred!!');
     } catch (error) {
       this.logger.error('Error while creating user: ', error.stack);
-      return new UnauthorizedException('Invalid credentials');
+      throw error;
     }
   }
   async storeToken(userId: number, token: string, type: TokenType) {

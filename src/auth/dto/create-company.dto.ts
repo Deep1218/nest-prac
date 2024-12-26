@@ -1,8 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export class CreateCompanyDto {
+  @ApiProperty({ type: Number, required: true, example: 1 })
+  @IsOptional()
+  id?: number;
+
   @ApiProperty({ type: String, required: true, example: 'Test Company' })
+  @ValidateIf((obj) => !obj.id)
   @IsString()
   name: string;
 
@@ -11,6 +16,7 @@ export class CreateCompanyDto {
     required: true,
     example: 'This is the test company',
   })
+  @ValidateIf((obj) => !obj.id)
   @IsString()
   about: string;
 

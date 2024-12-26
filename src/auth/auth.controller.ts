@@ -28,10 +28,6 @@ export class AuthController {
   }
   @Post('generate-token')
   generateToken(@Body() tokenDetails: GenerateTokenDTO, @Req() req: any) {
-    try {
-      return this.authservice.generateAccessToken(tokenDetails.refreshToken);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.authservice.generateAccessToken(tokenDetails.refreshToken);
   }
 }

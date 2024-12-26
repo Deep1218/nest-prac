@@ -28,7 +28,6 @@ export class CheckUserExistsGuard implements CanActivate {
         request['user'] = userExists;
       }
     }
-
     return true;
   }
 }
