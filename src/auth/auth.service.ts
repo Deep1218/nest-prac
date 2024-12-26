@@ -17,6 +17,7 @@ import * as bcrypt from 'bcrypt';
 import { CompaniesEntity } from '../modules/users/entities/companies.user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { ActivitiesEntity, LogTypes } from './entities/activities.user.entity';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,8 @@ export class AuthService {
     private usersRepository: Repository<UsersEntity>,
     @InjectRepository(TokensEntity, 'userDB')
     private tokensRepository: Repository<TokensEntity>,
+    @InjectRepository(ActivitiesEntity, 'userDB')
+    private activityRepository: Repository<ActivitiesEntity>,
     @InjectDataSource('userDB')
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
@@ -36,41 +39,51 @@ export class AuthService {
     userData: Partial<UsersEntity>,
     companyDetails?: Partial<CompaniesEntity>,
   ) {
-    try {
-      return this.dataSource.transaction(async (manager: EntityManager) => {
-        // Step 1: Create the user
-        const { password = '' } = userData;
-        userData.password = await this.encryptPassword(password);
-        const user = manager.create(UsersEntity, userData);
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      // Step 1: Create the user
+      const { password = '' } = userData;
+      userData.password = await this.encryptPassword(password);
+      const user = manager.create(UsersEntity, userData);
 
-        // Step 2: If the user role is 'Admin', create a company for the user
-        // and if user role is 'viewer' / 'editor' than fetch & add it to user
-        if ([UserRole.VIEWER, UserRole.EDITOR].includes(userData.role)) {
-          const company = await manager.findOne(CompaniesEntity, {
-            where: { id: companyDetails.id },
-          });
-          if (!company) {
-            throw new BadRequestException(
-              "Company with the provided id doesn't exists!",
-            );
-          }
-          user.company = company;
-        } else if (userData.role === UserRole.ADMIN) {
-          const company = manager.create(CompaniesEntity, companyDetails);
-
-          const newCompany = await manager.save(CompaniesEntity, company);
-          user.company = newCompany;
+      // Step 2: If the user role is 'Admin', create a company for the user
+      // and if user role is 'viewer' / 'editor' than fetch & add it to user
+      if ([UserRole.VIEWER, UserRole.EDITOR].includes(userData.role)) {
+        const company = await manager.findOne(CompaniesEntity, {
+          where: { id: companyDetails.id },
+        });
+        if (!company) {
+          throw new BadRequestException(
+            "Company with the provided id doesn't exists!",
+          );
         }
-        const savedUser = await manager.save(UsersEntity, user);
+        user.company = company;
+      } else if (userData.role === UserRole.ADMIN) {
+        const company = manager.create(CompaniesEntity, companyDetails);
 
-        // Step 3: Return the created user with the company
-        return savedUser;
-      });
+        const newCompany = await manager.save(CompaniesEntity, company);
+        user.company = newCompany;
+      }
+      const savedUser = await manager.save(UsersEntity, user);
+
+      // Step 3: Return the created user with the company
+      const activity = {
+        user: savedUser,
+        company: savedUser.company,
+        type: LogTypes.MEMBER_ADDED,
+        description: `${userData.firstName} ${userData.lastName} is added as ${userData.role}.`,
+      };
+      this.addActivity(activity);
+      return savedUser;
+    });
+  }
+  async addActivity(actvityDetails: Record<string, any>) {
+    try {
+      const activity = this.activityRepository.create(actvityDetails);
+      await this.activityRepository.insert(activity);
     } catch (error) {
-      this.logger.error(`In user transcation: `, error.stack);
+      this.logger.error(`Error while addding the activity`, error.stack);
     }
   }
-
   async loginProcess(userDetails: CreateUserDto, user?: UsersEntity) {
     try {
       const password = userDetails.password;
@@ -92,6 +105,13 @@ export class AuthService {
           email: userData.email,
           role: userData.role,
         };
+        const activity = {
+          user: userData,
+          company: userData.company,
+          type: LogTypes.MEMBER_LOGEDIN,
+          description: `${userData.firstName} ${userData.lastName} (${userData.role}) has loged in to the portal.`,
+        };
+
         const accessToken = this.jwtService.sign(payload, {
           expiresIn: this.configService.get<string>('JWT_TOKEN_EXPIRY_TIME'),
         });
@@ -101,6 +121,7 @@ export class AuthService {
           ),
         });
         this.storeToken(userData.id, refreshToken, TokenType.REFRESH);
+        this.addActivity(activity);
         return { ...userData, accessToken, refreshToken };
       }
       throw new UnauthorizedException('Invalid cred!!');
@@ -162,6 +183,7 @@ export class AuthService {
   async findOne(condition: Record<string, any>) {
     try {
       return this.usersRepository.findOne({
+        relations: { company: true },
         where: { ...condition, isDeleted: false, status: UserStatus.ACTIVE },
       });
     } catch (error) {

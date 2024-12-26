@@ -28,8 +28,12 @@ const userDBSourceOptions: DataSourceOptions = {
         '*{.ts,.js}',
       ),
     ),
-    ,
   ], // Adjust based on your migrations path
+  subscribers: [
+    normalize(
+      resolve(__dirname, '..', '..', '**', '*', '*.user.subscriber{.ts,.js}'),
+    ),
+  ],
   synchronize: false, // Use migrations instead of synchronize in production
   logging: false,
 };

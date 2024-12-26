@@ -7,6 +7,7 @@ import { TokensEntity } from './entities/tokens.user.entity';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { ActivitiesEntity } from './entities/activities.user.entity';
 
 @Module({
   imports: [
@@ -31,7 +32,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         },
       }),
     }),
-    TypeOrmModule.forFeature([UsersEntity, TokensEntity], 'userDB'),
+    TypeOrmModule.forFeature(
+      [UsersEntity, TokensEntity, ActivitiesEntity],
+      'userDB',
+    ),
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
