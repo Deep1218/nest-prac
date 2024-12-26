@@ -106,8 +106,8 @@ export class AuthService {
           role: userData.role,
         };
         const activity = {
-          user: userData.id,
-          company: userData.company.id,
+          userId: userData.id,
+          companyId: userData.company.id,
           type: LogTypes.MEMBER_LOGEDIN,
           description: `${userData.firstName} ${userData.lastName} (${userData.role}) has loged in to the portal.`,
         };

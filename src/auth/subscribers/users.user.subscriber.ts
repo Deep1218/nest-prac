@@ -20,7 +20,7 @@ export class UserSubscriber implements EntitySubscriberInterface<UsersEntity> {
    * Called after entity insertion.
    */
   afterInsert(event: InsertEvent<any>) {
-    console.log(`AFTER ENTITY INSERTED: `, event.entity);
+    console.log(`AFTER ENTITY INSERTED: `);
     this.userDetails = event.entity;
   }
 
