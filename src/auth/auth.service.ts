@@ -17,7 +17,7 @@ import * as bcrypt from 'bcrypt';
 import { CompaniesEntity } from '../modules/users/entities/companies.user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ActivitiesEntity, LogTypes } from './entities/activities.user.entity';
+import { ActivitiesEntity, LogTypes } from './entities/activities.main.entity';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +27,7 @@ export class AuthService {
     private usersRepository: Repository<UsersEntity>,
     @InjectRepository(TokensEntity, 'userDB')
     private tokensRepository: Repository<TokensEntity>,
-    @InjectRepository(ActivitiesEntity, 'userDB')
+    @InjectRepository(ActivitiesEntity)
     private activityRepository: Repository<ActivitiesEntity>,
     @InjectDataSource('userDB')
     private readonly dataSource: DataSource,
@@ -67,8 +67,8 @@ export class AuthService {
 
       // Step 3: Return the created user with the company
       const activity = {
-        user: savedUser,
-        company: savedUser.company,
+        userId: savedUser.id,
+        companyId: savedUser.company.id,
         type: LogTypes.MEMBER_ADDED,
         description: `${userData.firstName} ${userData.lastName} is added as ${userData.role}.`,
       };
@@ -106,8 +106,8 @@ export class AuthService {
           role: userData.role,
         };
         const activity = {
-          user: userData,
-          company: userData.company,
+          user: userData.id,
+          company: userData.company.id,
           type: LogTypes.MEMBER_LOGEDIN,
           description: `${userData.firstName} ${userData.lastName} (${userData.role}) has loged in to the portal.`,
         };

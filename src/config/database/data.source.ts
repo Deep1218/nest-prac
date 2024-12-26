@@ -43,7 +43,9 @@ const mainDBSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   entities: [
-    normalize(resolve(__dirname, '..', '..', '**', '*', '*.entity{.ts,.js}')),
+    normalize(
+      resolve(__dirname, '..', '..', '**', '*', '*.main.entity{.ts,.js}'),
+    ),
   ], // Adjust based on your output path
   migrations: [
     normalize(

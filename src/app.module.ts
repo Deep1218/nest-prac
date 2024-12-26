@@ -11,8 +11,7 @@ import { mainDataSource, userDataSource } from './config/database/data.source';
 import { WinstonLogger } from './config/logger/winston.logger';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersController } from './modules/users/users.controller';
-import { JwtService } from '@nestjs/jwt';
+import { PostsModule } from './modules/posts/posts.module';
 
 @Module({
   imports: [
@@ -30,6 +29,7 @@ import { JwtService } from '@nestjs/jwt';
     }),
     AuthModule,
     UsersModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService, WinstonLogger],

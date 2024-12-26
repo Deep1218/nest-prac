@@ -39,11 +39,9 @@ export class ActivitiesEntity {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => UsersEntity, { nullable: false })
-  @JoinColumn()
-  user: UsersEntity;
+  @Column({ type: 'int4', nullable: false })
+  companyId: number;
 
-  @ManyToOne(() => CompaniesEntity, { nullable: false })
-  @JoinColumn()
-  company: CompaniesEntity;
+  @Column({ type: 'int4', nullable: false })
+  userId: number;
 }
