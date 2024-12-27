@@ -10,13 +10,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-export enum UserRole {
-  MASTER = 'master',
-  ADMIN = 'admin',
-  VIEWER = 'viewer',
-  EDITOR = 'editor',
-  USER = 'user',
-}
 export enum PostStatus {
   UNDER_REVIEW = 0,
   PUBLISHED = 1,
@@ -54,12 +47,4 @@ export class PostsEntity {
     default: () => 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
-
-  @ManyToMany(() => UsersEntity)
-  @JoinColumn()
-  user: UsersEntity;
-
-  @ManyToMany(() => CompaniesEntity)
-  @JoinColumn()
-  company: CompaniesEntity;
 }
