@@ -18,6 +18,8 @@ import { CompaniesEntity } from '../modules/users/entities/companies.user.entity
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ActivitiesEntity, LogTypes } from './entities/activities.main.entity';
+import { PrismaUserService } from 'src/shared/database/prisma-user.service';
+import { PrismaMainService } from 'src/shared/database/prisma-main.service';
 
 @Injectable()
 export class AuthService {
@@ -33,66 +35,67 @@ export class AuthService {
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly prismaService: PrismaUserService,
+    private readonly prismaMainService: PrismaMainService,
   ) {}
-
-  private async createUserWithCompany(
-    userData: Partial<UsersEntity>,
-    companyDetails?: Partial<CompaniesEntity>,
-  ) {
-    return this.dataSource.transaction(async (manager: EntityManager) => {
-      // Step 1: Create the user
+  async createUserWithCompanyPrisma(userData: any, companyDetails?: any) {
+    return await this.prismaService.$transaction(async (prisma) => {
+      // Step 1: Encrypt the password and create the user
       const { password = '' } = userData;
       userData.password = await this.encryptPassword(password);
-      const user = manager.create(UsersEntity, userData);
 
-      // Step 2: If the user role is 'Admin', create a company for the user
-      // and if user role is 'viewer' / 'editor' than fetch & add it to user
+      // Step 2: Handle roles and company associations
+      let savedUser;
       if ([UserRole.VIEWER, UserRole.EDITOR].includes(userData.role)) {
-        const company = await manager.findOne(CompaniesEntity, {
-          where: { id: companyDetails.id },
+        savedUser = await prisma.users.create({
+          data: {
+            ...userData,
+            company: {
+              connect: {
+                id: companyDetails.id,
+              },
+            },
+          },
+          include: { company: true },
         });
-        if (!company) {
-          throw new BadRequestException(
-            "Company with the provided id doesn't exists!",
-          );
-        }
-        user.company = company;
+        this.addActivity({
+          userId: savedUser.id,
+          companyId: savedUser.companyId,
+          type: 'new_memeber_add',
+          description: `${userData.firstName} ${userData.lastName} is added as ${userData.role}.`,
+        });
       } else if (userData.role === UserRole.ADMIN) {
-        const company = manager.create(CompaniesEntity, companyDetails);
-
-        const newCompany = await manager.save(CompaniesEntity, company);
-        user.company = newCompany;
+        savedUser = await prisma.users.create({
+          data: {
+            ...userData,
+            company: {
+              create: companyDetails,
+            },
+          },
+          include: { company: true },
+        });
       }
-      const savedUser = await manager.save(UsersEntity, user);
 
-      // Step 3: Return the created user with the company
-      const activity = {
-        userId: savedUser.id,
-        companyId: savedUser.company.id,
-        type: LogTypes.MEMBER_ADDED,
-        description: `${userData.firstName} ${userData.lastName} is added as ${userData.role}.`,
-      };
-      this.addActivity(activity);
+      // Return the created user
       return savedUser;
     });
   }
-  async addActivity(actvityDetails: Record<string, any>) {
+  async addActivity(actvityDetails: any) {
     try {
-      const activity = this.activityRepository.create(actvityDetails);
-      await this.activityRepository.insert(activity);
+      await this.prismaMainService.activities.create({
+        data: actvityDetails,
+      });
     } catch (error) {
       this.logger.error(`Error while addding the activity`, error.stack);
     }
   }
-  async loginProcess(userDetails: CreateUserDto, user?: UsersEntity) {
+  async loginProcess(userDetails: CreateUserDto, user?: any) {
     try {
       const password = userDetails.password;
+      const { companyDetails = null, ...userDetail } = userDetails;
       let userData =
         user ??
-        (await this.createUserWithCompany(
-          userDetails,
-          userDetails?.companyDetails,
-        ));
+        (await this.createUserWithCompanyPrisma(userDetail, companyDetails));
 
       const passwordVerified = await this.verifyPassword(
         password,
@@ -107,8 +110,8 @@ export class AuthService {
         };
         const activity = {
           userId: userData.id,
-          companyId: userData.company.id,
-          type: LogTypes.MEMBER_LOGEDIN,
+          companyId: userData.companyId,
+          type: 'memeber_loged_in',
           description: `${userData.firstName} ${userData.lastName} (${userData.role}) has loged in to the portal.`,
         };
 
@@ -137,16 +140,19 @@ export class AuthService {
         data.expireAt = new Date(
           data.expireAt.getTime() + 60 * 24 * 60 * 60 * 1000,
         ); // Add 60 days in milliseconds
-        const tokenExists = await this.tokensRepository.findOne({
+        const tokenExists = await this.prismaService.tokens.findFirst({
           where: { userId, type },
         });
         if (tokenExists) {
-          data['id'] = tokenExists.id;
+          return await this.prismaService.tokens.update({
+            where: { id: tokenExists.id },
+            data: { expireAt: data.expireAt },
+          });
         }
       } else {
         data.expireAt = new Date(data.expireAt.getTime() + 60 * 60 * 1000); // Add 1 hour in milliseconds
       }
-      return this.tokensRepository.save(data);
+      return this.prismaService.tokens.create({ data });
     } catch (error) {
       this.logger.error('Error storing token: ', error.stack);
     }
@@ -180,32 +186,27 @@ export class AuthService {
     }
   }
 
-  async findOne(condition: Record<string, any>) {
+  async findOne(condition: any) {
     try {
-      return this.usersRepository.findOne({
-        relations: { company: true },
-        where: { ...condition, isDeleted: false, status: UserStatus.ACTIVE },
+      return this.prismaService.users.findFirst({
+        where: {
+          ...condition,
+          isDeleted: false,
+          status: UserStatus.ACTIVE,
+        },
+        include: { company: true },
       });
     } catch (error) {
       this.logger.error(`Error while fetching the user: `, error.stack);
     }
   }
-
-  async checkEmailExists(email: string) {
-    try {
-      return this.findOne({ email, isDeleted: false });
-    } catch (error) {
-      this.logger.error(`Error while checking email: `, error.stack);
-    }
-  }
-
   async generateAccessToken(refreshToken: string) {
     try {
       const result = await this.jwtService.verifyAsync(refreshToken);
-      const tokenExists = await this.tokensRepository.findOne({
+      const tokenExists = await this.prismaService.tokens.findFirst({
         where: { userId: result.sub, type: TokenType.REFRESH },
       });
-      const userData = await this.findOne({ id: tokenExists.userId });
+      const userData = await this.findOne({ id: Number(tokenExists.userId) });
       const payload = {
         sub: userData.id,
         email: userData.email,

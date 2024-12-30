@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output = "./client"
 }
 
 datasource db {
@@ -68,7 +69,7 @@ model users {
   password      String            @db.VarChar(250)
   status        Int               @default(1)
   companyId     Int?
-  companies     companies?        @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6f9395c9037632a31107c8a9e58")
+  company     companies?        @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6f9395c9037632a31107c8a9e58")
 }
 
 enum tokens_type_enum {

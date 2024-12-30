@@ -8,6 +8,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ActivitiesEntity } from './entities/activities.main.entity';
+import { DatabaseModule } from 'src/shared/database/database.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ActivitiesEntity } from './entities/activities.main.entity';
     }),
     TypeOrmModule.forFeature([UsersEntity, TokensEntity], 'userDB'),
     TypeOrmModule.forFeature([ActivitiesEntity]),
+    DatabaseModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

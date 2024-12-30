@@ -2,7 +2,6 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  InternalServerErrorException,
   Logger,
   Post,
   Req,

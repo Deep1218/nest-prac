@@ -12,6 +12,7 @@ import { WinstonLogger } from './config/logger/winston.logger';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { DatabaseModule } from './shared/database/database.module';
 
 @Module({
   imports: [

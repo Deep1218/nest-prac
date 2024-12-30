@@ -1,20 +1,8 @@
-/*
-  Warnings:
-
-  - You are about to drop the `activities` table. If the table is not empty, all the data it contains will be lost.
-
-*/
 -- CreateEnum
 CREATE TYPE "tokens_type_enum" AS ENUM ('auth', 'refresh');
 
 -- CreateEnum
 CREATE TYPE "users_role_enum" AS ENUM ('master', 'admin', 'viewer', 'editor', 'user');
-
--- DropTable
-DROP TABLE "activities";
-
--- DropEnum
-DROP TYPE "activities_type_enum";
 
 -- CreateTable
 CREATE TABLE "companies" (
