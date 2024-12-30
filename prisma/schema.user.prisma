@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_USER")
+}
+
+model companies {
+  id        Int                   @id(map: "PK_d4bc3e82a314fa9e29f652c2c22") @default(autoincrement())
+  name      String                @db.VarChar(250)
+  about     String?
+  logoUrl   String?               @db.VarChar(500)
+  isDeleted Boolean               @default(false)
+  createdAt DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt DateTime              @default(now()) @db.Timestamp(6)
+   status   Int                   @default(1)
+  users     users[]
+}
+
+model company_members {
+  id        Int      @id(map: "PK_b159163d9222448886158bc5385") @default(autoincrement())
+  companyId BigInt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model followers {
+  id          Int      @id(map: "PK_c90cfc5b18edd29bd15ba95c1a4") @default(autoincrement())
+  followingId BigInt
+  followerId  BigInt
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @db.Timestamp(6)
+}
+
+model posts {
+  id          Int               @id(map: "PK_2829ac61eff60fcec60d7274b9e") @default(autoincrement())
+  title       String            @db.VarChar(250)
+  description String?
+  mediaUrl    String?           @db.VarChar(500)
+  status      Int               @default(0)
+  isDeleted   Boolean           @default(false)
+  createdAt   DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime          @default(now()) @db.Timestamp(6)
+}
+
+model tokens {
+  id        Int              @id(map: "PK_3001e89ada36263dabf1fb6210a") @default(autoincrement())
+  userId    BigInt
+  token     String           @db.VarChar
+  type      tokens_type_enum @default(auth)
+  expireAt  DateTime         @db.Timestamp(6)
+  createdAt DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt DateTime         @default(now()) @db.Timestamp(6)
+}
+
+model users {
+  id            Int               @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(autoincrement())
+  firstName     String            @db.VarChar(50)
+  lastName      String            @db.VarChar(50)
+  email         String            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar(250)
+  profilePicUrl String?           @db.VarChar(500)
+  role          users_role_enum
+  isDeleted     Boolean           @default(false)
+  createdAt     DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime          @default(now()) @db.Timestamp(6)
+  password      String            @db.VarChar(250)
+  status        Int               @default(1)
+  companyId     Int?
+  companies     companies?        @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6f9395c9037632a31107c8a9e58")
+}
+
+enum tokens_type_enum {
+  auth
+  refresh
+}
+
+enum users_role_enum {
+  master
+  admin
+  viewer
+  editor
+  user
+}

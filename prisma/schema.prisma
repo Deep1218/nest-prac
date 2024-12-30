@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model activities {
+  id          Int                  @id(map: "PK_7f4004429f731ffb9c88eb486a8") @default(autoincrement())
+  description String?
+  type        activities_type_enum
+  createdAt   DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime             @default(now()) @db.Timestamp(6)
+  companyId   Int
+  userId      Int
+}
+
+enum activities_type_enum {
+  new_memeber_add            @map("new memeber add")
+  memeber_loged_in           @map("memeber loged in")
+  memeber_created_a_new_post @map("memeber created a new post")
+}
