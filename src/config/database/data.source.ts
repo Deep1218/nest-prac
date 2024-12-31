@@ -1,4 +1,4 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 import { resolve, normalize } from 'path';
 import * as dotenv from 'dotenv';
 
@@ -7,7 +7,7 @@ dotenv.config({
 });
 
 // TypeORM configuration options for user database
-const userDBSourceOptions: DataSourceOptions = {
+export const userDBSourceOptions: DataSourceOptions = {
   name: 'userDB', // Name of this DataSource. only if have more than one DB connection
   type: 'postgres',
   url: process.env.DATABASE_URL_USER,
@@ -39,7 +39,7 @@ const userDBSourceOptions: DataSourceOptions = {
 };
 
 // TypeORM configuration options for main database
-const mainDBSourceOptions: DataSourceOptions = {
+export const mainDBSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   entities: [
@@ -63,7 +63,3 @@ const mainDBSourceOptions: DataSourceOptions = {
   synchronize: false,
   logging: false,
 };
-
-// Create and export the DataSource
-export const userDataSource = new DataSource(userDBSourceOptions);
-export const mainDataSource = new DataSource(mainDBSourceOptions);

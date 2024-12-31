@@ -23,7 +23,8 @@
     "typeorm:revert": "npx typeorm-ts-node-commonjs -d src/config/database/main.data-source.ts migration:revert",
     "typeorm:user:generate": "npx typeorm-ts-node-commonjs -d src/config/database/user.data-source.ts migration:generate src/scripts/migrations/userDB/table",
     "typeorm:user:run": "npx typeorm-ts-node-commonjs -d src/config/database/user.data-source.ts migration:run",
-    "typeorm:user:revert": "npx typeorm-ts-node-commonjs -d src/config/database/user.data-source.ts migration:revert"
+    "typeorm:user:revert": "npx typeorm-ts-node-commonjs -d src/config/database/user.data-source.ts migration:revert",
+    "seed": "ts-node src/config/database/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -43,6 +44,7 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
+    "typeorm-extension": "^3.6.3",
     "winston": "^3.17.0"
   },
   "devDependencies": {

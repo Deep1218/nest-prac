@@ -7,7 +7,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { mainDataSource, userDataSource } from './config/database/data.source';
+import {
+  userDBSourceOptions,
+  mainDBSourceOptions,
+} from './config/database/data.source';
 import { WinstonLogger } from './config/logger/winston.logger';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -20,11 +23,11 @@ import { PostsModule } from './modules/posts/posts.module';
       envFilePath: resolve('.', 'environments', `.env.${process.env.NODE_ENV}`),
     }),
     TypeOrmModule.forRoot({
-      ...userDataSource.options,
+      ...userDBSourceOptions,
       autoLoadEntities: true,
     }),
     TypeOrmModule.forRoot({
-      ...mainDataSource.options,
+      ...mainDBSourceOptions,
       autoLoadEntities: true,
     }),
     AuthModule,

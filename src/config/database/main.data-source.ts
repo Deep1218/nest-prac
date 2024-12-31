@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { mainDataSource } from './data.source';
-export default mainDataSource;
+import { mainDBSourceOptions } from './data.source';
+import { DataSource } from 'typeorm';
+export default new DataSource(mainDBSourceOptions);
