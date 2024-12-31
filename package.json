@@ -25,6 +25,9 @@
     "prisma:user:migrate:prod": "npx prisma migrate deploy --schema .\\prisma\\user\\schema.prisma",
     "prisma:main:migrate:prod": "npx prisma migrate deploy --schema .\\prisma\\main\\schema.prisma"
   },
+  "prisma": {
+    "seed": "ts-node prisma\\seed.ts"
+  },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",

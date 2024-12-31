@@ -22,4 +22,5 @@ enum activities_type_enum {
   new_memeber_add            @map("new memeber add")
   memeber_loged_in           @map("memeber loged in")
   memeber_created_a_new_post @map("memeber created a new post")
+  super_admin_created         @map("super admin created")
 }

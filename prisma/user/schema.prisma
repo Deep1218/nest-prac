@@ -78,6 +78,7 @@ enum tokens_type_enum {
 }
 
 enum users_role_enum {
+  super_admin
   master
   admin
   viewer
