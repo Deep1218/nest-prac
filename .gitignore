@@ -55,3 +55,10 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Prisma client (if using custom output directory)
+prisma/*/client/
+
+# Cache and temporary files
+prisma/*/migrations/.migration_lock
+prisma/*/migrations/migration_lock.toml
