@@ -4,35 +4,20 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import {
-  UserRole,
-  UsersEntity,
-  UserStatus,
-} from './entities/users.user.entity';
-import { DataSource, EntityManager, Repository } from 'typeorm';
-import { TokensEntity, TokenType } from './entities/tokens.user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { CompaniesEntity } from '../modules/users/entities/companies.user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ActivitiesEntity, LogTypes } from './entities/activities.main.entity';
 import { PrismaUserService } from 'src/shared/database/prisma-user.service';
 import { PrismaMainService } from 'src/shared/database/prisma-main.service';
+import { tokens_type_enum } from 'prisma/user/client';
+import { users_role_enum } from 'prisma/user/client';
+import { UserStatus } from './types';
 
 @Injectable()
 export class AuthService {
   private logger = new Logger(AuthService.name);
   constructor(
-    @InjectRepository(UsersEntity, 'userDB')
-    private usersRepository: Repository<UsersEntity>,
-    @InjectRepository(TokensEntity, 'userDB')
-    private tokensRepository: Repository<TokensEntity>,
-    @InjectRepository(ActivitiesEntity)
-    private activityRepository: Repository<ActivitiesEntity>,
-    @InjectDataSource('userDB')
-    private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly prismaService: PrismaUserService,
@@ -46,7 +31,9 @@ export class AuthService {
 
       // Step 2: Handle roles and company associations
       let savedUser;
-      if ([UserRole.VIEWER, UserRole.EDITOR].includes(userData.role)) {
+      if (
+        [users_role_enum.viewer, users_role_enum.editor].includes(userData.role)
+      ) {
         savedUser = await prisma.users.create({
           data: {
             ...userData,
@@ -64,7 +51,7 @@ export class AuthService {
           type: 'new_memeber_add',
           description: `${userData.firstName} ${userData.lastName} is added as ${userData.role}.`,
         });
-      } else if (userData.role === UserRole.ADMIN) {
+      } else if (userData.role === users_role_enum.admin) {
         savedUser = await prisma.users.create({
           data: {
             ...userData,
@@ -123,7 +110,7 @@ export class AuthService {
             'JWT_REFRESH_TOKEN_EXPIRY_TIME',
           ),
         });
-        this.storeToken(userData.id, refreshToken, TokenType.REFRESH);
+        this.storeToken(userData.id, refreshToken, tokens_type_enum.refresh);
         this.addActivity(activity);
         return { ...userData, accessToken, refreshToken };
       }
@@ -133,10 +120,10 @@ export class AuthService {
       throw error;
     }
   }
-  async storeToken(userId: number, token: string, type: TokenType) {
+  async storeToken(userId: number, token: string, type: tokens_type_enum) {
     try {
       const data = { userId, token, type, expireAt: new Date() };
-      if (type === TokenType.REFRESH) {
+      if (type === tokens_type_enum.refresh) {
         data.expireAt = new Date(
           data.expireAt.getTime() + 60 * 24 * 60 * 60 * 1000,
         ); // Add 60 days in milliseconds
@@ -204,7 +191,7 @@ export class AuthService {
     try {
       const result = await this.jwtService.verifyAsync(refreshToken);
       const tokenExists = await this.prismaService.tokens.findFirst({
-        where: { userId: result.sub, type: TokenType.REFRESH },
+        where: { userId: result.sub, type: tokens_type_enum.refresh },
       });
       const userData = await this.findOne({ id: Number(tokenExists.userId) });
       const payload = {

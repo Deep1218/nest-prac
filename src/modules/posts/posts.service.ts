@@ -1,23 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PostsEntity } from './entities/posts.user.entity';
+import { PrismaUserService } from 'src/shared/database/prisma-user.service';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
-  constructor(
-    @InjectRepository(PostsEntity, 'userDB')
-    private readonly postRepository: Repository<PostsEntity>,
-  ) {}
+  constructor(private readonly prismaService: PrismaUserService) {}
 
-  create(data: Record<string, any>) {
+  create(data: any) {
     try {
-      const post = this.postRepository.create(data);
-      return this.postRepository.save(post);
+      return this.prismaService.posts.create({ data });
     } catch (error) {
       this.logger.error(`Error while creating post: `, error.stack);
     }
   }
-  // newPost(){}
 }

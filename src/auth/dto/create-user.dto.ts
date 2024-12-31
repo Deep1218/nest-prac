@@ -6,7 +6,7 @@ import {
   IsString,
   ValidateIf,
 } from 'class-validator';
-import { UserRole } from '../entities/users.user.entity';
+import { users_role_enum } from 'prisma/user/client';
 import { CreateCompanyDto } from './create-company.dto';
 
 export class CreateUserDto {
@@ -32,12 +32,16 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @ApiProperty({ enum: UserRole, required: true, example: UserRole.ADMIN })
-  @IsEnum(UserRole)
+  @ApiProperty({
+    enum: users_role_enum,
+    required: true,
+    example: users_role_enum.admin,
+  })
+  @IsEnum(users_role_enum)
   @IsOptional()
-  role: UserRole;
+  role: users_role_enum;
 
   @ApiProperty({ type: CreateCompanyDto })
-  @ValidateIf((obj) => obj.role === UserRole.ADMIN)
+  @ValidateIf((obj) => obj.role === users_role_enum.admin)
   companyDetails: CreateCompanyDto;
 }

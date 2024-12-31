@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
-import { UserStatus } from '../entities/users.user.entity';
+import { UserStatus } from '../types';
 
 const configService = new ConfigService();
 

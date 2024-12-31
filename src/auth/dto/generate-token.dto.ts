@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsString, ValidateIf } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class GenerateTokenDTO {
   @ApiProperty({
