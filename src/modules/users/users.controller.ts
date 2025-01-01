@@ -28,4 +28,14 @@ export class UsersController {
       throw new InternalServerErrorException(error);
     }
   }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/all')
+  users() {
+    try {
+      return this.userService.getAllUser();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 }

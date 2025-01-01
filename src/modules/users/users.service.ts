@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaUserService } from 'src/shared/database/prisma-user.service';
 import { UserEntity } from '../../auth/entities/user.entity';
+import { plainToInstance } from 'class-transformer';
+import { users_role_enum } from 'prisma/user/client';
 
 @Injectable()
 export class UsersService {
@@ -13,7 +15,22 @@ export class UsersService {
         where: { id: userId },
         include: { company: true },
       });
-      return new UserEntity(userDetails);
+      return plainToInstance(UserEntity, userDetails);
+    } catch (error) {
+      this.logger.error(`Error fetching the user details: `, error.stack);
+    }
+  }
+
+  async getAllUser() {
+    try {
+      const users = await this.prismaService.users.findMany({
+        where: {
+          isDeleted: false,
+          status: 1,
+          NOT: { role: users_role_enum.super_admin },
+        },
+      });
+      return plainToInstance(UserEntity, users);
     } catch (error) {
       this.logger.error(`Error fetching the user details: `, error.stack);
     }
