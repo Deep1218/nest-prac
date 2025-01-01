@@ -1,10 +1,12 @@
 import {
+  ClassSerializerInterceptor,
   Controller,
   Get,
   InternalServerErrorException,
   Logger,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -17,6 +19,7 @@ export class UsersController {
   private logger = new Logger(UsersController.name);
   constructor(private readonly userService: UsersService) {}
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   getProfile(@Req() req: any) {
     try {

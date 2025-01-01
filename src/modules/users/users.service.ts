@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { PrismaUserService } from 'src/shared/database/prisma-user.service';
-import { Repository } from 'typeorm';
+import { UserEntity } from '../../auth/entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -14,7 +13,7 @@ export class UsersService {
         where: { id: userId },
         include: { company: true },
       });
-      return userDetails;
+      return new UserEntity(userDetails);
     } catch (error) {
       this.logger.error(`Error fetching the user details: `, error.stack);
     }

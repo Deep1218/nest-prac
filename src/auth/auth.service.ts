@@ -13,6 +13,7 @@ import { PrismaMainService } from 'src/shared/database/prisma-main.service';
 import { tokens_type_enum } from 'prisma/user/client';
 import { users_role_enum } from 'prisma/user/client';
 import { UserStatus } from './types';
+import { UserEntity } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -112,7 +113,7 @@ export class AuthService {
         });
         this.storeToken(userData.id, refreshToken, tokens_type_enum.refresh);
         this.addActivity(activity);
-        return { ...userData, accessToken, refreshToken };
+        return new UserEntity({ ...userData, accessToken, refreshToken });
       }
       throw new UnauthorizedException('Invalid cred!!');
     } catch (error) {
