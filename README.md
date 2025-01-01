@@ -61,7 +61,8 @@ Leverages .env files for secure and organized configuration.
    ```
 3. Configure environment variables:
 
-   - Create a `.env` file in the root directory.
+   - Create a `enviornment` folder with `.env.local` file (for `local`) in the root directory.
+     - You can set different env for the different evniornment with `.env.<evniornment_name>`
    - Define the necessary variables (refer to `.env.example` for guidance).
 
 4. Run database migrations (primary database):
