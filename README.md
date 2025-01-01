@@ -6,11 +6,9 @@ This project is a hands-on exploration of key features and best practices in bui
 
 ### 1. Configuration Management
 
-nestjs/config: Centralized configuration management for environment variables and application settings.
-
-Supports multiple environments (e.g., development, production).
-
-Leverages .env files for secure and organized configuration.
+- **@nestjs/config**: Centralized configuration management for environment variables and application settings.
+- Supports multiple environments (e.g., development, production).
+- Leverages .env files for secure and organized configuration.
 
 ### 2. API Documentation
 
